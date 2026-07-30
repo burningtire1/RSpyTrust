@@ -5,56 +5,49 @@
 local Root = script
 
 
+
 local Config =
 	require(
 		Root.Config
 	)
 
 
-local Services = {}
 
-
-local function LoadFolder(folder)
-
-	for _,module in ipairs(folder:GetChildren()) do
-
-		if module:IsA("ModuleScript") then
-
-			Services[module.Name] =
-				require(module)
-
-		end
-
-	end
-
-end
+local ReplicatedStorage =
+	game:GetService(
+		"ReplicatedStorage"
+	)
 
 
 
--- Load Utils first
-LoadFolder(
-	Root.Utils
-)
+------------------------------------------------
+-- Services
+------------------------------------------------
+
+
+local Input =
+	require(
+		Root.Services.Input
+	)
 
 
 
--- Load Core systems
-
-LoadFolder(
-	Root.Core
-)
+------------------------------------------------
+-- Core
+------------------------------------------------
 
 
-
--- Load Services
-
-LoadFolder(
-	Root.Services
-)
+local Logger =
+	require(
+		Root.Core.Logger
+	)
 
 
 
--- Start UI
+------------------------------------------------
+-- UI
+------------------------------------------------
+
 
 local UI =
 	require(
@@ -63,15 +56,230 @@ local UI =
 
 
 
+------------------------------------------------
+-- Pages
+------------------------------------------------
+
+
+local Activity =
+	require(
+		Root.Pages.Activity
+	)
+
+
+local Remotes =
+	require(
+		Root.Pages.Remotes
+	)
+
+
+local Analytics =
+	require(
+		Root.Pages.Analytics
+	)
+
+
+local Settings =
+	require(
+		Root.Pages.Settings
+	)
+
+
+
+------------------------------------------------
+-- Network Hook
+------------------------------------------------
+
+
+local Modules =
+	require(
+		ReplicatedStorage.SharedModules.Global
+	)
+
+
+
+local OldFire =
+	Modules.Network.FireServer
+
+
+local OldInvoke =
+	Modules.Network.InvokeServer
+
+
+
+
+Modules.Network.FireServer =
+	function(...)
+
+		local args =
+			{...}
+
+
+		Logger:Add(
+			"FireServer",
+			args,
+			3
+		)
+
+
+
+		return OldFire(
+			unpack(args)
+		)
+
+	end
+
+
+
+
+
+Modules.Network.InvokeServer =
+	function(...)
+
+		local args =
+			{...}
+
+
+
+		Logger:Add(
+			"InvokeServer",
+			args,
+			3
+		)
+
+
+
+		return OldInvoke(
+			unpack(args)
+		)
+
+	end
+
+
+
+
+------------------------------------------------
+-- Start UI
+------------------------------------------------
+
+
 UI:Start(
 	Config
 )
 
 
 
-print(
-	string.format(
-		"%s loaded successfully",
-		Config.Name
+local Window =
+	UI.Window
+
+
+
+------------------------------------------------
+-- Page Router
+------------------------------------------------
+
+
+local function OpenPage(page)
+
+	page:Load(
+		Window
 	)
+
+end
+
+
+
+
+Window:AddButton(
+	"Activity",
+	function()
+
+		OpenPage(
+			Activity
+		)
+
+	end
+)
+
+
+
+Window:AddButton(
+	"Remotes",
+	function()
+
+		OpenPage(
+			Remotes
+		)
+
+	end
+)
+
+
+
+Window:AddButton(
+	"Analytics",
+	function()
+
+		OpenPage(
+			Analytics
+		)
+
+	end
+)
+
+
+
+Window:AddButton(
+	"Settings",
+	function()
+
+		OpenPage(
+			Settings
+		)
+
+	end
+)
+
+
+
+------------------------------------------------
+-- Default Page
+------------------------------------------------
+
+
+OpenPage(
+	Activity
+)
+
+
+
+------------------------------------------------
+-- Keyboard
+------------------------------------------------
+
+
+Input.KeyPressed:Connect(
+	function(key)
+
+
+		if key ==
+			Config.UI.ToggleKey then
+
+
+			Window.Main.Visible =
+				not Window.Main.Visible
+
+
+		end
+
+
+	end
+)
+
+
+
+print(
+	Config.Name
+	..
+	" loaded!"
 )
